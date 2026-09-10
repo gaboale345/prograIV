@@ -1,0 +1,115 @@
+{% extends "admin/base_site.html" %}
+{% load i18n static %}
+
+{% block title %}{% if form.errors %}{% translate "Error:" %} {% endif %}{{ block.super }}{% endblock %}
+{% block extrastyle %}{{ block.super }}<link rel="stylesheet" href="{% static "admin/css/login.css" %}">
+{{ form.media }}
+<style>
+  .lang-tabs {
+    display: flex;
+    gap: 0;
+    margin: 0 0 20px;
+    border-bottom: 1px solid var(--hairline-color, #e0e0e0);
+  }
+  .lang-tabs form {
+    margin: 0;
+    flex: 1;
+  }
+  .lang-tabs button {
+    width: 100%;
+    border: 0;
+    border-bottom: 3px solid transparent;
+    background: transparent;
+    padding: 10px 12px;
+    cursor: pointer;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--body-quiet-color, #666);
+  }
+  .lang-tabs button:hover {
+    color: var(--body-fg, #333);
+  }
+  .lang-tabs button.active {
+    color: var(--link-fg, #417690);
+    border-bottom-color: var(--link-fg, #417690);
+  }
+</style>
+{% endblock %}
+
+{% block bodyclass %}{{ block.super }} login{% endblock %}
+
+{% block usertools %}{% endblock %}
+
+{% block nav-global %}{% endblock %}
+
+{% block nav-sidebar %}{% endblock %}
+
+{% block content_title %}{% endblock %}
+
+{% block nav-breadcrumbs %}{% endblock %}
+
+{% block content %}
+{% get_current_language as LANGUAGE_CODE %}
+{% if form.errors and not form.non_field_errors %}
+<p class="errornote">
+{% blocktranslate count counter=form.errors.items|length %}Please correct the error below.{% plural %}Please correct the errors below.{% endblocktranslate %}
+</p>
+{% endif %}
+
+{% if form.non_field_errors %}
+{% for error in form.non_field_errors %}
+<p class="errornote">
+    {{ error }}
+</p>
+{% endfor %}
+{% endif %}
+
+<div id="content-main">
+
+{% if user.is_authenticated %}
+<p class="errornote">
+{% blocktranslate trimmed %}
+    You are authenticated as {{ username }}, but are not authorized to
+    access this page. Would you like to login to a different account?
+{% endblocktranslate %}
+</p>
+{% endif %}
+
+<div class="lang-tabs" role="tablist" aria-label="{% translate 'Language' %}">
+  <form action="{% url 'set_language' %}" method="post">
+    {% csrf_token %}
+    <input name="next" type="hidden" value="{{ request.get_full_path }}">
+    <input name="language" type="hidden" value="es">
+    <button type="submit" role="tab" aria-selected="{% if LANGUAGE_CODE == 'es' %}true{% else %}false{% endif %}" class="{% if LANGUAGE_CODE == 'es' %}active{% endif %}">Español</button>
+  </form>
+  <form action="{% url 'set_language' %}" method="post">
+    {% csrf_token %}
+    <input name="next" type="hidden" value="{{ request.get_full_path }}">
+    <input name="language" type="hidden" value="en">
+    <button type="submit" role="tab" aria-selected="{% if LANGUAGE_CODE == 'en' %}true{% else %}false{% endif %}" class="{% if LANGUAGE_CODE == 'en' %}active{% endif %}">English</button>
+  </form>
+</div>
+
+<form action="{{ app_path }}" method="post" id="login-form">{% csrf_token %}
+  <div class="form-row">
+    {{ form.username.errors }}
+    {{ form.username.label_tag }} {{ form.username }}
+  </div>
+  <div class="form-row">
+    {{ form.password.errors }}
+    {{ form.password.label_tag }} {{ form.password }}
+    <input type="hidden" name="next" value="{{ next }}">
+  </div>
+  {% url 'admin_password_reset' as password_reset_url %}
+  {% if password_reset_url %}
+  <div class="password-reset-link">
+    <a href="{{ password_reset_url }}">{% translate 'Forgotten your login credentials?' %}</a>
+  </div>
+  {% endif %}
+  <div class="submit-row">
+    <input type="submit" value="{% translate 'Log in' %}">
+  </div>
+</form>
+
+</div>
+{% endblock %}
